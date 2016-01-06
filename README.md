@@ -25,11 +25,11 @@ in which this file resides.
      $logResults = true;
     ```
 
-# Deafult use of the script
+# Deafult usage
     - By default, the script is written to find and replace Eval Base64 Decode or Encode
     recursively in directory. This can help you identify if there is any malicious code in your
     directory and remove it using this script.
 
-# Custom use of the script
+# Custom usage
     - This script can be modifed to search any other pattern by modifying the `$pattern` varaibale.
     You can use your own regex pattern here to find or replace the desired matching pattern
