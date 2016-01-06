@@ -1,16 +1,22 @@
 <?php
-# RegEx For Eval Removal: \s+(eval\(base64.*?\))\);
-exit;
-function back_to_for_slash($str) {
-    return str_replace('\\', '/', $str);
-}
+/**
+*  Script for Recursively Find and Replace Regex Pattern in a directory
+*/
 
-$current_dir = back_to_for_slash(dirname(__FILE__) . '/public_html');
-$directory = $current_dir;
+// Directory you want to Searhc
+$targetDirectory = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'my_target_folder';
 
-$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
-echo "Eval Base64 Decode or Encode Removal Script\n-----------";
-$i = 1;
+// Find and replace, default to Find only
+$remove = false;
+
+// Targeted file extension to find occurences
+$targetExtension = '.php';
+
+// The Pattern you would like to search
+$pattern = '/(eval\(base64.*?\))\);/';
+
+// Log Results in a file
+$logResults = false;
 
 // Concatenated end message for logging
 $allEndMsg = '';
@@ -18,11 +24,13 @@ $allEndMsg = '';
 // End message for logging
 $endMsg = '';
 
-// Find and replace, default to Find only
-$remove = false;
 
-// Targeted file extension to find occurences
-$targetExtension = '.php';
+/******************************************************** Code Starts Here ********************************************************/
+
+$directory = $targetDirectory;
+$it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+echo "<h3>----------- Eval Base64 Decode or Encode Removal Script\n-----------</h3><br />";
+$i = 1;
 
 while ($it->valid()) {
 
@@ -33,17 +41,16 @@ while ($it->valid()) {
         if (strpos($it->key(), $targetExtension) !== false) {
 
             // Windows OS only
-            $file_name = back_to_for_slash($it->key());
+            $file_name = DIRECTORY_SEPARATOR . $it->key();
 
             if(!is_writable($file_name)) {
-                $endMsg = 'Key: ' . $file_name . ' <span style="color: yellow;"><strong>File is not writable or doesn\'t exist.</strong></span><br>';
+                $endMsg = 'Key: ' . $file_name . '  =====>  '. ' <span style="color: red;"><strong>File is not writable or doesn\'t exist.</strong></span><br>';
             } else {
                 $file = fopen($file_name, 'r');
                 if (filesize($file_name) > 0) {
                     $contents = fread($file, filesize($file_name));
                     if ( $contents !== false ) {
                         fclose($file);
-                        $pattern = '/(eval\(base64.*?\))\);/';
                         preg_match($pattern, $contents, $matches);
 
                         if ( sizeof($matches) > 0 ) {
@@ -53,21 +60,21 @@ while ($it->valid()) {
                                 $fwrite = fwrite($file2, $content);
                                 if ( $fwrite !== false ) {
                                     fclose($file2);
-                                    $endMsg = 'Key: ' . $file_name . ' <span style="color: green;"><strong>Found and Removed.</strong></span><br>';
+                                    $endMsg = 'Key: ' . $file_name . '  =====>  '. ' <span style="color: green;"><strong>Pattern found and Removed.</strong></span><br>';
                                 } else {
-                                    $endMsg = 'Key: ' . $file_name . ' <span style="color: yellow;"><strong>Couldn\'t write to the file.</strong><br>';
+                                    $endMsg = 'Key: ' . $file_name . '  =====>  '. ' <span style="color: green;"><strong>Pattern found but not configured to remove matching pattern from the file.</strong><br>';
                                 }
                             } else {
-                                $endMsg = "Key: " . $file_name . " Found\n";
+                                $endMsg = "Key: " . $file_name . '  =====>  '. " Found\n";
                             }
                         } else {
-                            $endMsg = 'Key: ' . $file_name . ' <span style="color: blue;"><strong>No Eval Code found.</strong></span><br>';
+                            $endMsg = 'Key: ' . $file_name . '  =====>  '. ' <span style="color: blue;"><strong> Couldn\'t find the pattern.</strong></span><br>';
                         }
                     } else {
-                        $endMsg = 'Key: ' . $file_name . '<span style="color: yellow;"> <strong>Can\'t read the file..</strong></span><br>';
+                        $endMsg = 'Key: ' . $file_name . '  =====>  '. '<span style="color: red;"> <strong>Can\'t read the file..</strong></span><br>';
                     }
                 } else {
-                    $endMsg = 'Key: ' . $file_name . '<span style="color: yellow;"> <strong>File is empty.</strong></span><br>';
+                    $endMsg = 'Key: ' . $file_name . '  =====>  '. '<span style="color: red;"> <strong>File is empty.</strong></span><br>';
                 }
             }
 
@@ -79,6 +86,8 @@ while ($it->valid()) {
     $it->next();
 }
 
-$logFile = fopen(dirname(__FILE__) . '/eval_removal_log.html', 'w');
-$logFileFwrite = fwrite($logFile, $allEndMsg);
-if ( $logFileFwrite !== false ) fclose($logFile);
+if($logResults) {
+    $logFile = fopen(dirname(__FILE__) . '/eval_removal_log.html', 'w');
+    $logFileFwrite = fwrite($logFile, $allEndMsg);
+    if ( $logFileFwrite !== false ) fclose($logFile);
+}
